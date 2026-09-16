@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+    <!-- Balises iOS pour l'installation en app -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dodo Business">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="format-detection" content="telephone=no">
+
+    <title>Dodo Business</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+
+        :root {
+            --noir: #0a0a0a;
+            --noir-doux: #141414;
+            --rouge: #c8102e;
+            --rouge-sombre: #8b0a1f;
+            --blanc: #f5f5f5;
+            --blanc-casse: #d4d4d4;
+            --gris: #666;
+            --gris-clair: #2a2a2a;
+            --gris-bord: #1f1f1f;
+        }
+
+        html, body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--noir);
+            color: var(--blanc);
+            min-height: 100vh;
+            font-size: 15px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            overscroll-behavior: none;
+        }
+
+        input, select, textarea, button {
+            font-size: 16px; /* Empêche le zoom auto sur iOS */
+        }
+
+        /* BANNIÈRE iOS (add to home screen) */
+        .banniere-ios {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--noir-doux);
+            border-bottom: 1px solid var(--rouge);
+            padding: 12px 40px 12px 16px;
+            z-index: 500;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--blanc-casse);
+        }
+
+        .banniere-ios.visible { display: block; }
+
+        .banniere-ios strong { color: var(--rouge); }
+
+        .banniere-ios-fermer {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: transparent;
+            border: none;
+            color: var(--gris);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        /* ÉCRAN DE RENCONTRE */
+        .ecran-rencontre {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--noir);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 30px;
+            z-index: 1000;
+            transition: opacity 1s ease;
+        }
+
+        .ecran-rencontre.fade-out { opacity: 0; pointer-events: none; }
+
+        .ligne-rouge {
+            width: 0;
+            height: 1px;
+            background: var(--rouge);
+            transition: width 1.5s ease;
+        }
+
+        .ligne-rouge.active { width: 80px; }
+
+        .texte-d {
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: 19px;
+            line-height: 1.7;
+            color: var(--blanc);
+            text-align: center;
+            max-width: 500px;
+            margin-top: 40px;
+            min-height: 90px;
+            letter-spacing: 0.3px;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            white-space: pre-line;
+        }
+
+        .texte-d.visible { opacity: 1; }
+
+        .texte-d .curseur {
+            display: inline-block;
+            width: 1px;
+            height: 18px;
+            background: var(--rouge);
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: clignoter 0.8s infinite;
+        }
+
+        @keyframes clignoter {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        .champ-nom {
+            margin-top: 40px;
+            width: 100%;
+            max-width: 320px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .champ-nom.visible { opacity: 1; transform: translateY(0); }
+
+        .champ-nom input {
+            width: 100%;
+            padding: 14px 0;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--gris-clair);
+            color: var(--blanc);
+            font-family: Georgia, serif;
+            font-size: 20px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.4s;
+        }
+
+        .champ-nom input::placeholder { color: var(--gris); font-style: italic; }
+        .champ-nom input:focus { border-bottom-color: var(--rouge); }
+
+        .signature-d {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            font-family: Georgia, serif;
+            font-size: 14px;
+            color: var(--gris);
+            letter-spacing: 2px;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        .signature-d.visible { opacity: 1; }
+
+        /* OVERLAY D. GUIDE */
+        .overlay-d {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--noir);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 30px;
+            z-index: 900;
+            transition: opacity 0.6s ease;
+        }
+
+        .overlay-d.visible { display: flex; }
+        .overlay-d.fade-out { opacity: 0; pointer-events: none; }
+
+        .overlay-d .texte-d { margin-top: 30px; }
+
+        .overlay-d .btn-compris {
+            margin-top: 40px;
+            padding: 14px 36px;
+            background: var(--rouge);
+            color: var(--blanc);
+            border: none;
+            border-radius: 4px;
+            font-family: Georgia, serif;
+            font-size: 15px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.6s ease, background 0.3s;
+        }
+
+        .overlay-d .btn-compris.visible { opacity: 1; }
+        .overlay-d .btn-compris:hover { background: var(--rouge-sombre); }
+
+        /* MODAL BILAN PARLÉ */
+        .modal-fond {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 800;
+            justify-content: center;
+            align-items: flex-end;
+            padding: 20px;
+        }
+
+        .modal-fond.visible { display: flex; }
+
+        .modal-contenu {
+            background: var(--noir-doux);
+            border: 1px solid var(--gris-clair);
+            border-radius: 12px 12px 0 0;
+            width: 100%;
+            max-width: 500px;
+            padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+            animation: modalMonte 0.3s ease;
+        }
+
+        @keyframes modalMonte {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-titre {
+            font-family: Georgia, serif;
+            font-size: 17px;
+            color: var(--blanc);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .modal-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: var(--noir);
+            border: 1px solid var(--gris-clair);
+            color: var(--blanc-casse);
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .modal-btn:active {
+            border-color: var(--rouge);
+            color: var(--rouge);
+        }
+
+        .modal-btn-annuler {
+            background: transparent;
+            color: var(--gris);
+            border: none;
+            margin-top: 4px;
+        }
+
+        /* APPLICATION */
+        .app { display: none; min-height: 100vh; padding-bottom: 80px; }
+        .app.visible { display: block; }
+
+        .entete {
+            position: sticky;
+            top: 0;
+            background: var(--noir);
+            padding: 16px 20px;
+            padding-top: calc(16px + env(safe-area-inset-top));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--gris-bord);
+            z-index: 50;
+        }
+
+        .entete .logo {
+            font-family: Georgia, serif;
+            font-size: 14px;
+            color: var(--rouge);
+            letter-spacing: 3px;
+        }
+
+        .entete-droite {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-consulter-d {
+            background: transparent;
+            border: 1px solid var(--gris-clair);
+            color: var(--gris);
+            padding: 6px 12px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-family: inherit;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .btn-consulter-d:active {
+            border-color: var(--rouge);
+            color: var(--rouge);
+        }
+
+        .entete .nom-utilisateur {
+            font-size: 12px;
+            color: var(--gris);
+            letter-spacing: 0.5px;
+        }
+                /* Zone D. */
+        .zone-d {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 20px;
+            background: var(--noir-doux);
+            border-bottom: 1px solid var(--gris-bord);
+        }
+
+        .avatar-d {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 50%;
+            background: var(--rouge);
+            color: var(--blanc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Georgia, serif;
+            font-size: 16px;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .avatar-d::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 1px solid rgba(200,16,46,0.3);
+            animation: pulsation 3s ease-in-out infinite;
+        }
+
+        @keyframes pulsation {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.4; }
+        }
+
+        .bulle-d {
+            flex: 1;
+            font-family: Georgia, serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--blanc-casse);
+            padding-top: 8px;
+            min-height: 38px;
+            transition: opacity 0.4s ease;
+        }
+
+        .bulle-d.changement { opacity: 0; }
+
+        /* Pages */
+        .page { display: none; padding: 24px 20px; }
+        .page.active { display: block; }
+
+        .titre-page {
+            font-family: Georgia, serif;
+            font-size: 22px;
+            color: var(--blanc);
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .sous-titre-page {
+            font-size: 13px;
+            color: var(--gris);
+            margin-bottom: 24px;
+        }
+
+        .badge-semaine {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(200,16,46,0.15);
+            border: 1px solid var(--rouge);
+            color: var(--rouge);
+            font-size: 11px;
+            letter-spacing: 1px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        /* Cartes */
+        .carte {
+            background: var(--noir-doux);
+            border: 1px solid var(--gris-bord);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .carte-titre {
+            font-size: 13px;
+            color: var(--gris);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        /* Formulaires */
+        .champ { margin-bottom: 16px; }
+
+        .champ label {
+            display: block;
+            font-size: 13px;
+            color: var(--gris);
+            margin-bottom: 6px;
+        }
+
+        .champ input, .champ select {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--noir);
+            border: 1px solid var(--gris-clair);
+            border-radius: 4px;
+            color: var(--blanc);
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .champ input:focus, .champ select:focus { border-color: var(--rouge); }
+
+        .champ input[readonly] {
+            color: var(--gris);
+            background: var(--noir-doux);
+        }
+
+        .champ select {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 36px;
+        }
+
+        /* Boutons */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: var(--rouge);
+            color: var(--blanc);
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            font-family: inherit;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:active { background: var(--rouge-sombre); }
+
+        .btn-secondaire {
+            background: transparent;
+            border: 1px solid var(--gris-clair);
+            color: var(--blanc-casse);
+        }
+
+        /* Tableaux */
+        .tableau { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+        .tableau th {
+            text-align: left;
+            padding: 10px 8px;
+            font-size: 11px;
+            color: var(--gris);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--gris-clair);
+            font-weight: normal;
+        }
+
+        .tableau td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--gris-bord);
+            color: var(--blanc-casse);
+            font-size: 14px;
+        }
+
+        .tableau tr:last-child td { border-bottom: none; }
+
+        .tableau .total-ligne td {
+            color: var(--blanc);
+            font-weight: bold;
+            border-top: 1px solid var(--gris-clair);
+            padding-top: 14px;
+        }
+
+        /* Stat cards */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            background: var(--noir-doux);
+            border: 1px solid var(--gris-bord);
+            border-radius: 6px;
+            padding: 16px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--gris);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .stat-valeur {
+            font-size: 20px;
+            font-family: Georgia, serif;
+            color: var(--blanc);
+        }
+
+        .stat-valeur.rouge { color: var(--rouge); }
+
+        /* Nav bas */
+        .nav-bas {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--noir);
+            border-top: 1px solid var(--gris-bord);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+            z-index: 40;
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 8px 4px;
+            text-align: center;
+            color: var(--gris);
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: color 0.3s;
+            background: none;
+            border: none;
+            font-family: inherit;
+        }
+
+        .nav-item .icone { display: block; font-size: 18px; margin-bottom: 4px; }
+        .nav-item.active { color: var(--rouge); }
+
+        /* Messages */
+        .message {
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .message.visible { display: block; }
+
+        .message.succes {
+            background: rgba(200,16,46,0.1);
+            border: 1px solid var(--rouge);
+            color: var(--blanc);
+        }
+
+        .message.erreur {
+            background: rgba(255,80,80,0.1);
+            border: 1px solid #ff5050;
+            color: #ff8a8a;
+        }
+
+        .vide {
+            text-align: center;
+            color: var(--gris);
+            font-style: italic;
+            padding: 30px 20px;
+            font-size: 14px;
+        }
+
+        .btn-action {
+            background: transparent;
+            border: 1px solid var(--gris-clair);
+            color: var(--gris);
+            padding: 6px 12px;
+            border-radius: 3px;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .btn-action:active {
+            border-color: var(--rouge);
+            color: var(--rouge);
+        }
+
+        @media (max-width: 380px) {
+            .stat-valeur { font-size: 17px; }
+            .nav-item { font-size: 9px; }
+            .nav-item .icone { font-size: 16px; }
+        }
+
+        @media (display-mode: standalone) {
+            .banniere-ios { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- BANNIÈRE iOS -->
+<div class="banniere-ios" id="banniere-ios">
+    <strong>💡 Protégez vos données</strong><br>
+    Ajoutez cette page à votre écran d'accueil : appuyez sur <strong>Partager</strong> en bas, puis sur <strong>Sur l'écran d'accueil</strong>.
+    <button class="banniere-ios-fermer" onclick="fermerBanniereIOS()">✕</button>
+</div>
+
+<!-- ÉCRAN DE RENCONTRE -->
+<div class="ecran-rencontre" id="ecran-rencontre">
+    <div class="ligne-rouge" id="ligne-rouge"></div>
+    <div class="texte-d" id="texte-d"></div>
+    <div class="champ-nom" id="champ-nom">
+        <input type="text" id="input-nom" placeholder="Votre nom" autocomplete="off" maxlength="20" autocapitalize="words">
+    </div>
+    <div class="signature-d" id="signature-d">D.</div>
+</div>
+
+<!-- OVERLAY D. GUIDE -->
+<div class="overlay-d" id="overlay-d">
+    <div class="texte-d" id="texte-d-guide"></div>
+    <button class="btn-compris" id="btn-compris" onclick="fermerOverlayD()">J'ai compris</button>
+    <div class="signature-d visible">D.</div>
+</div>
+
+<!-- MODAL BILAN PARLÉ -->
+<div class="modal-fond" id="modal-bilan" onclick="if(event.target === this) fermerModalBilan()">
+    <div class="modal-contenu">
+        <div class="modal-titre">Quel bilan voulez-vous ?</div>
+        <button class="modal-btn" onclick="choisirBilan('jour')">Bilan du jour</button>
+        <button class="modal-btn" onclick="choisirBilan('semaine')">Bilan de la semaine</button>
+        <button class="modal-btn" onclick="choisirBilan('mois')">Bilan du mois</button>
+        <button class="modal-btn modal-btn-annuler" onclick="fermerModalBilan()">Annuler</button>
+    </div>
+</div>
+
+<!-- APPLICATION -->
+<div class="app" id="app">
+
+    <div class="entete">
+        <div class="logo">DODO BUSINESS</div>
+        <div class="entete-droite">
+            <button class="btn-consulter-d" id="btn-consulter-d" onclick="consulterD()">Consulter D</button>
+            <div class="nom-utilisateur" id="affiche-nom">—</div>
+        </div>
+    </div>
+
+    <div class="zone-d">
+        <div class="avatar-d">D.</div>
+        <div class="bulle-d" id="bulle-d">Prête à commencer.</div>
+    </div>
+
+    <!-- ACCUEIL -->
+    <div class="page active" id="page-accueil">
+        <div class="titre-page">Aujourd'hui</div>
+        <div class="sous-titre-page" id="date-aujourd-hui">—</div>
+
+        <div class="badge-semaine" id="badge-semaine-accueil">Semaine 1 · en cours</div>
+
+        <div class="stat-grid">
+            <div class="stat">
+                <div class="stat-label">Ventes</div>
+                <div class="stat-valeur" id="stat-ventes-jour">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Encaissé</div>
+                <div class="stat-valeur rouge" id="stat-encaisse-jour">0 FC</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">À crédit</div>
+                <div class="stat-valeur" id="stat-credit-jour">0 FC</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Dettes en cours</div>
+                <div class="stat-valeur" id="stat-dettes">0</div>
+            </div>
+        </div>
+
+        <div class="carte">
+            <div class="carte-titre">Prochaine étape</div>
+            <div id="prochaine-etape" style="font-family: Georgia, serif; font-size: 15px; color: var(--blanc-casse); margin-bottom: 14px;">
+                Ajoutez vos ingrédients de la semaine.
+            </div>
+            <button class="btn" id="btn-prochaine" onclick="allerA('ingredients')">Ajouter des ingrédients</button>
+        </div>
+
+        <div class="carte">
+            <div class="carte-titre">Semaine en cours</div>
+            <p style="font-size: 13px; color: var(--gris); margin-bottom: 16px; line-height: 1.6;">
+                Quand la semaine est terminée, passez à la suivante. Les données resteront consultables dans le bilan.
+            </p>
+            <button class="btn btn-secondaire" onclick="nouvelleSemaine()">
+                Terminer la semaine et passer à la suivante
+            </button>
+        </div>
+
+        <div class="carte" style="margin-top: 30px; border-color: var(--gris-bord);">
+            <div class="carte-titre">Gestion des données</div>
+            <p style="font-size: 13px; color: var(--gris); margin-bottom: 16px; line-height: 1.6;">
+                Sauvegardez régulièrement vos données pour ne rien perdre.
+            </p>
+            <button class="btn btn-secondaire" onclick="sauvegarderDonnees()" style="margin-bottom: 10px;">
+                💾 Sauvegarder les données
+            </button>
+            <button class="btn btn-secondaire" onclick="restaurerDonnees()" style="margin-bottom: 10px;">
+                📂 Restaurer une sauvegarde
+            </button>
+            <button class="btn btn-secondaire" onclick="reinitialiserDonnees()" style="border-color: #8b0a1f; color: #ff5050;">
+                ⚠️ Réinitialiser le logiciel
+            </button>
+            <div class="message" id="msg-data"></div>
+        </div>
+    </div>
+
+    <!-- INGRÉDIENTS -->
+    <div class="page" id="page-ingredients">
+        <div class="titre-page">Ingrédients</div>
+        <div class="sous-titre-page" id="sous-titre-ing">Semaine 1</div>
+
+        <div class="carte" id="form-ing">
+            <div class="champ">
+                <label>Nom de l'ingrédient</label>
+                <input type="text" id="ing-nom" placeholder="Ex: Huile, Sel, Épices..." autocapitalize="sentences">
+            </div>
+            <div class="champ">
+                <label>Prix (FC)</label>
+                <input type="number" id="ing-prix" placeholder="Ex: 5000" inputmode="numeric">
+            </div>
+            <button class="btn" onclick="ajouterIngredient()">Ajouter</button>
+            <div class="message" id="msg-ing"></div>
+        </div>
+
+        <div class="carte">
+            <div class="carte-titre">Ingrédients de la semaine</div>
+            <div id="liste-ingredients"></div>
+        </div>
+    </div>
+
+    <!-- PRODUCTION -->
+    <div class="page" id="page-production">
+        <div class="titre-page">Production</div>
+        <div class="sous-titre-page" id="sous-titre-prod">Semaine 1</div>
+
+        <div class="carte" id="form-prod">
+            <div class="champ">
+                <label>Nombre de pièces préparées</label>
+                <input type="number" id="prod-pieces" placeholder="Ex: 45" inputmode="numeric">
+            </div>
+            <div class="champ">
+                <label>Poids total (kg)</label>
+                <input type="number" id="prod-poids" placeholder="Ex: 12" step="0.1" inputmode="decimal">
+            </div>
+            <div class="champ">
+                <label>Prix total de la préparation (FC)</label>
+                <input type="number" id="prod-prix" placeholder="Ex: 75000" inputmode="numeric">
+            </div>
+            <button class="btn" onclick="enregistrerProduction()">Enregistrer la production</button>
+            <div class="message" id="msg-prod"></div>
+        </div>
+
+        <div class="carte">
+            <div class="carte-titre">Production de la semaine</div>
+            <div id="info-production"></div>
+        </div>
+    </div>
+
+    <!-- VENDRE -->
+    <div class="page" id="page-vendre">
+        <div class="titre-page">Nouvelle vente</div>
+        <div class="sous-titre-page">Enregistrez une vente au fur et à mesure</div>
+
+        <div class="carte">
+            <div class="champ">
+                <label>Type de vente</label>
+                <select id="vente-type">
+                    <option value="piece">À la pièce</option>
+                    <option value="kg">Au kilo</option>
+                </select>
+            </div>
+            <div class="champ">
+                <label>Quantité</label>
+                <input type="number" id="vente-quantite" placeholder="Ex: 3" step="0.01" inputmode="decimal" oninput="calculerVente()">
+            </div>
+            <div class="champ">
+                <label>Prix unitaire (FC)</label>
+                <input type="number" id="vente-prix" placeholder="Prix" inputmode="numeric" oninput="calculerVente()">
+            </div>
+            <div class="champ">
+                <label>Total</label>
+                <input type="text" id="vente-total" readonly value="0 FC">
+            </div>
+            <div class="champ">
+                <label>Paiement</label>
+                <select id="vente-paiement" onchange="afficherClient()">
+                    <option value="comptant">Payé comptant</option>
+                    <option value="credit">À crédit</option>
+                </select>
+            </div>
+            <div class="champ" id="champ-client" style="display:none;">
+                <label>Nom du client</label>
+                <input type="text" id="vente-client" placeholder="Ex: Marie" autocapitalize="words">
+            </div>
+            <button class="btn" onclick="enregistrerVente()">Enregistrer la vente</button>
+            <div class="message" id="msg-vente"></div>
+        </div>
+    </div>
+
+    <!-- DETTES -->
+    <div class="page" id="page-dettes">
+        <div class="titre-page">Dettes</div>
+        <div class="sous-titre-page">Clients qui vous doivent de l'argent</div>
+        <div class="carte">
+            <div id="liste-dettes"></div>
+        </div>
+    </div>
+
+    <!-- BILAN -->
+    <div class="page" id="page-bilan">
+        <div class="titre-page">Bilan</div>
+        <div class="sous-titre-page">Consultez vos semaines et vos résultats</div>
+
+        <div class="carte">
+            <div class="carte-titre">Choisir une semaine</div>
+            <select id="select-bilan-semaine" onchange="majBilan()" style="width:100%; padding:12px; background: var(--noir); border:1px solid var(--gris-clair); border-radius:4px; color:var(--blanc); font-size:15px; font-family:inherit; outline:none;"></select>
+        </div>
+
+        <div class="carte">
+            <div class="carte-titre">Résumé</div>
+            <div id="bilan-contenu"></div>
+        </div>
+
+        <div class="carte">
+            <div class="carte-titre">Demander un bilan parlé à D.</div>
+            <p style="font-size:13px; color: var(--gris); margin-bottom:12px; line-height:1.6;">
+                D. peut vous raconter vos résultats à voix haute, dans un langage simple.
+            </p>
+            <button class="btn btn-secondaire" onclick="ouvrirModalBilan()">Demander à D.</button>
+        </div>
+    </div>
+
+    <!-- NAV BAS -->
+    <div class="nav-bas">
+        <button class="nav-item active" data-page="accueil" onclick="allerA('accueil')">
+            <span class="icone">◆</span>Accueil
+        </button>
+        <button class="nav-item" data-page="ingredients" onclick="allerA('ingredients')">
+            <span class="icone">◆</span>Ingrédients
+        </button>
+        <button class="nav-item" data-page="production" onclick="allerA('production')">
+            <span class="icone">◆</span>Production
+        </button>
+        <button class="nav-item" data-page="vendre" onclick="allerA('vendre')">
+            <span class="icone">◆</span>Vendre
+        </button>
+        <button class="nav-item" data-page="dettes" onclick="allerA('dettes')">
+            <span class="icone">◆</span>Dettes
+        </button>
+        <button class="nav-item" data-page="bilan" onclick="allerA('bilan')">
+            <span class="icone">◆</span>Bilan
+        </button>
+    </div>
+
+</div>
+<script>
+// ============================================
+// DONNÉES
+// ============================================
+const CLE_DATA = 'dodo_business_data';
+
+let data = chargerDonnees();
+
+function chargerDonnees() {
+    const brut = localStorage.getItem(CLE_DATA);
+    if (brut) {
+        try {
+            const d = JSON.parse(brut);
+            if (!d.pagesExpliquees) d.pagesExpliquees = [];
+            return d;
+        } catch(e) { console.error(e); }
+    }
+    return {
+        nom: '',
+        semaineActive: 1,
+        ingredients: [],
+        productions: [],
+        ventes: [],
+        dettes: [],
+        pagesExpliquees: []
+    };
+}
+
+function sauvegarder() {
+    localStorage.setItem(CLE_DATA, JSON.stringify(data));
+}
+
+// ============================================
+// DÉTECTION iOS
+// ============================================
+const estIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const estStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+
+function fermerBanniereIOS() {
+    document.getElementById('banniere-ios').classList.remove('visible');
+    localStorage.setItem('dodo_banniere_ios_vue', 'oui');
+}
+
+function afficherBanniereIOS() {
+    if (!estIOS) return;
+    if (estStandalone) return;
+    if (localStorage.getItem('dodo_banniere_ios_vue') === 'oui') return;
+    document.getElementById('banniere-ios').classList.add('visible');
+}
+
+// ============================================
+// RÉFÉRENCES DOM
+// ============================================
+const ecranRencontre = document.getElementById('ecran-rencontre');
+const ligneRouge = document.getElementById('ligne-rouge');
+const texteD = document.getElementById('texte-d');
+const champNom = document.getElementById('champ-nom');
+const inputNom = document.getElementById('input-nom');
+const signatureD = document.getElementById('signature-d');
+const app = document.getElementById('app');
+const afficheNom = document.getElementById('affiche-nom');
+const bulleD = document.getElementById('bulle-d');
+
+const overlayD = document.getElementById('overlay-d');
+const texteDGuide = document.getElementById('texte-d-guide');
+const btnCompris = document.getElementById('btn-compris');
+
+const modalBilan = document.getElementById('modal-bilan');
+
+const VITESSE_FRAPPE = 40;
+const PAUSE_COURTE = 1100;
+const PAUSE_LONGUE = 2000;
+
+// ============================================
+// FONCTIONS D'ÉCRITURE
+// ============================================
+function ecrireDansElement(el, texte, callback) {
+    el.classList.add('visible');
+    el.innerHTML = '<span class="curseur"></span>';
+    let i = 0;
+    const interval = setInterval(() => {
+        if (i < texte.length) {
+            let contenu = texte.substring(0, i + 1);
+            contenu = contenu.replace(/\n/g, '<br>');
+            el.innerHTML = contenu + '<span class="curseur"></span>';
+            i++;
+        } else {
+            clearInterval(interval);
+            if (callback) setTimeout(callback, PAUSE_COURTE);
+        }
+    }, VITESSE_FRAPPE);
+}
+
+function effacerElement(el, callback) {
+    el.classList.remove('visible');
+    setTimeout(() => {
+        el.innerHTML = '';
+        if (callback) callback();
+    }, 600);
+}
+
+// ============================================
+// RENCONTRE INITIALE
+// ============================================
+function demarrerRencontre() {
+    setTimeout(() => ligneRouge.classList.add('active'), 400);
+
+    setTimeout(() => {
+        ecrireDansElement(texteD, "Bonjour. Je m'appelle D.", () => {
+            effacerElement(texteD, () => {
+                ecrireDansElement(texteD, "Je suis un assistant conçu par Ansima Babeho pour vous aider à gérer votre commerce.", () => {
+                    effacerElement(texteD, () => {
+                        ecrireDansElement(texteD, "Comment puis-je vous appeler ?", () => {
+                            champNom.classList.add('visible');
+                            setTimeout(() => inputNom.focus(), 300);
+                        });
+                    });
+                });
+            });
+        });
+    }, 2100);
+}
+
+inputNom.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.keyCode === 13) {
+        e.preventDefault();
+        validerNom();
+    }
+});
+
+// Ajouter un bouton invisible pour valider sur iOS (le clavier peut ne pas afficher "Entrée")
+inputNom.addEventListener('blur', () => {
+    // On ne valide pas automatiquement, juste pour éviter les pertes
+});
+
+function validerNom() {
+    const nom = inputNom.value.trim();
+    if (nom.length === 0) return;
+    if (data.nom && data.nom.length > 0) return;
+
+    data.nom = nom;
+    sauvegarder();
+
+    champNom.classList.remove('visible');
+
+    setTimeout(() => {
+        effacerElement(texteD, () => {
+            ecrireDansElement(texteD, nom + ". C'est noté.", () => {
+                effacerElement(texteD, () => {
+                    ecrireDansElement(texteD, "Nous allons commencer par le plus simple.", () => {
+                        signatureD.classList.add('visible');
+                        setTimeout(() => {
+                            ecranRencontre.classList.add('fade-out');
+                            setTimeout(() => {
+                                ecranRencontre.style.display = 'none';
+                                app.classList.add('visible');
+                                afficheNom.textContent = nom;
+                                dire("Bonjour " + nom + ". Prête à travailler.");
+                                initialiser();
+                                afficherBanniereIOS();
+                                setTimeout(() => expliquerPage('accueil'), 2000);
+                            }, 800);
+                        }, PAUSE_LONGUE);
+                    });
+                });
+            });
+        });
+    }, 600);
+}
+
+// ============================================
+// D. GUIDE
+// ============================================
+const EXPLICATIONS = {
+    accueil: "Voici la page d'accueil. Vous y trouverez toujours un résumé de votre journée, la prochaine étape à faire, et le bouton pour passer à la semaine suivante quand vous avez terminé.",
+    ingredients: "C'est ici que vous inscrivez tout ce que vous achetez pour préparer vos saucisses. Ajoutez un ingrédient, puis son prix. Le total se calcule tout seul. À la fin de la semaine, passez à la suivante depuis la page d'accueil.",
+    production: "Dites-moi ce que vous avez préparé cette semaine. Combien de pièces ? Quel poids total ? Pour quel prix ? Le logiciel calculera tout seul le poids moyen et le coût moyen d'une pièce.",
+    vendre: "C'est ici que vous enregistrez chaque vente, une par une, au fur et à mesure de la journée. D'abord, choisissez si vous vendez à la pièce ou au kilo. Entrez la quantité, puis le prix unitaire. Le total se calcule automatiquement. Ensuite, indiquez si le client a payé comptant ou s'il prend à crédit. Si c'est à crédit, n'oubliez pas d'écrire son nom : il apparaîtra dans la page Dettes. Appuyez sur Enregistrer à chaque vente.",
+    dettes: "Voici tous les clients qui vous doivent de l'argent. Quand quelqu'un vous rembourse, appuyez sur 'Payé'. La dette disparaît de la liste et le montant revient dans votre caisse.",
+    bilan: "Votre bilan vous montre tout ce qui s'est passé. Vous pouvez choisir une semaine dans le menu pour voir le détail. Et si vous voulez, vous pouvez demander à D. de vous raconter vos résultats à voix haute."
+};
+
+function expliquerPage(nomPage) {
+    if (data.pagesExpliquees.includes(nomPage)) return;
+    if (!EXPLICATIONS[nomPage]) return;
+
+    overlayD.classList.add('visible');
+    texteDGuide.classList.remove('visible');
+    btnCompris.classList.remove('visible');
+    texteDGuide.innerHTML = '';
+
+    setTimeout(() => {
+        ecrireDansElement(texteDGuide, EXPLICATIONS[nomPage], () => {
+            btnCompris.textContent = "J'ai compris";
+            btnCompris.classList.add('visible');
+            data.pagesExpliquees.push(nomPage);
+            sauvegarder();
+        });
+    }, 300);
+}
+
+function fermerOverlayD() {
+    overlayD.classList.add('fade-out');
+    setTimeout(() => {
+        overlayD.classList.remove('visible');
+        overlayD.classList.remove('fade-out');
+        texteDGuide.innerHTML = '';
+        btnCompris.classList.remove('visible');
+    }, 600);
+}
+
+function consulterD() {
+    const pageActive = document.querySelector('.page.active').id.replace('page-', '');
+
+    if (pageActive === 'bilan') {
+        ouvrirModalBilan();
+        return;
+    }
+
+    overlayD.classList.add('visible');
+    texteDGuide.classList.remove('visible');
+    btnCompris.classList.remove('visible');
+    texteDGuide.innerHTML = '';
+
+    setTimeout(() => {
+        ecrireDansElement(texteDGuide, EXPLICATIONS[pageActive] || "Que voulez-vous savoir ?", () => {
+            btnCompris.textContent = "J'ai compris";
+            btnCompris.classList.add('visible');
+        });
+    }, 300);
+}
+
+// ============================================
+// MODAL BILAN PARLÉ
+// ============================================
+function ouvrirModalBilan() {
+    modalBilan.classList.add('visible');
+}
+
+function fermerModalBilan() {
+    modalBilan.classList.remove('visible');
+}
+
+function choisirBilan(type) {
+    fermerModalBilan();
+    setTimeout(() => bilanParle(type), 300);
+}
+
+// ============================================
+// ASSISTANT D. — Bulle
+// ============================================
+let timerBulle = null;
+
+function dire(message) {
+    bulleD.classList.add('changement');
+    clearTimeout(timerBulle);
+    timerBulle = setTimeout(() => {
+        bulleD.textContent = message;
+        bulleD.classList.remove('changement');
+    }, 300);
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+function allerA(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector('.nav-item[data-page="' + page + '"]').classList.add('active');
+
+    if (page === 'accueil') majAccueil();
+    if (page === 'ingredients') majIngredients();
+    if (page === 'production') majProduction();
+    if (page === 'dettes') majDettes();
+    if (page === 'bilan') majBilan();
+
+    window.scrollTo(0, 0);
+    setTimeout(() => expliquerPage(page), 400);
+}
+
+// ============================================
+// INITIALISATION
+// ============================================
+function initialiser() {
+    const d = new Date();
+    const dateStr = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    document.getElementById('date-aujourd-hui').textContent = dateStr;
+    document.getElementById('badge-semaine-accueil').textContent = 'Semaine ' + data.semaineActive + ' · en cours';
+    document.getElementById('sous-titre-ing').textContent = 'Semaine ' + data.semaineActive;
+    document.getElementById('sous-titre-prod').textContent = 'Semaine ' + data.semaineActive;
+    majAccueil();
+}
+// ============================================
+// INGRÉDIENTS
+// ============================================
+function ajouterIngredient() {
+    const nom = document.getElementById('ing-nom').value.trim();
+    const prix = parseFloat(document.getElementById('ing-prix').value);
+
+    const msg = document.getElementById('msg-ing');
+
+    if (!nom || isNaN(prix) || prix <= 0) {
+        msg.className = 'message erreur visible';
+        msg.textContent = 'Remplissez les deux champs correctement.';
+        return;
+    }
+
+    data.ingredients.push({
+        id: Date.now(),
+        semaine: data.semaineActive,
+        date: new Date().toISOString(),
+        nom: nom,
+        prix: prix
+    });
+
+    sauvegarder();
+    document.getElementById('ing-nom').value = '';
+    document.getElementById('ing-prix').value = '';
+
+    msg.className = 'message succes visible';
+    msg.textContent = 'Ingrédient ajouté.';
+    setTimeout(() => msg.classList.remove('visible'), 2500);
+
+    majIngredients();
+    dire("Ingrédient ajouté.");
+}
+
+function majIngredients() {
+    const conteneur = document.getElementById('liste-ingredients');
+    const ings = data.ingredients.filter(i => i.semaine === data.semaineActive);
+
+    if (ings.length === 0) {
+        conteneur.innerHTML = '<div class="vide">Aucun ingrédient pour cette semaine.</div>';
+        return;
+    }
+
+    let total = 0;
+    let html = '<table class="tableau"><thead><tr><th>Ingrédient</th><th>Prix</th><th></th></tr></thead><tbody>';
+    ings.forEach(i => {
+        total += i.prix;
+        html += `<tr>
+            <td>${i.nom}</td>
+            <td>${i.prix.toLocaleString()} FC</td>
+            <td style="text-align:right;"><button class="btn-action" onclick="supprimerIngredient(${i.id})">×</button></td>
+        </tr>`;
+    });
+    html += `<tr class="total-ligne"><td>Total</td><td colspan="2">${total.toLocaleString()} FC</td></tr>`;
+    html += '</tbody></table>';
+    conteneur.innerHTML = html;
+}
+
+function supprimerIngredient(id) {
+    if (!confirm('Supprimer cet ingrédient ?')) return;
+    data.ingredients = data.ingredients.filter(i => i.id !== id);
+    sauvegarder();
+    majIngredients();
+}
+
+// ============================================
+// PRODUCTION
+// ============================================
+function enregistrerProduction() {
+    const pieces = parseInt(document.getElementById('prod-pieces').value);
+    const poids = parseFloat(document.getElementById('prod-poids').value);
+    const prix = parseFloat(document.getElementById('prod-prix').value);
+
+    const msg = document.getElementById('msg-prod');
+
+    if (isNaN(pieces) || pieces <= 0 || isNaN(poids) || poids <= 0 || isNaN(prix) || prix <= 0) {
+        msg.className = 'message erreur visible';
+        msg.textContent = 'Remplissez tous les champs correctement.';
+        return;
+    }
+
+    data.productions.push({
+        id: Date.now(),
+        semaine: data.semaineActive,
+        date: new Date().toISOString(),
+        nbPieces: pieces,
+        poidsTotal: poids,
+        prixTotal: prix
+    });
+
+    sauvegarder();
+    document.getElementById('prod-pieces').value = '';
+    document.getElementById('prod-poids').value = '';
+    document.getElementById('prod-prix').value = '';
+
+    msg.className = 'message succes visible';
+    msg.textContent = 'Production enregistrée.';
+    setTimeout(() => msg.classList.remove('visible'), 2500);
+
+    majProduction();
+    dire("Production enregistrée.");
+}
+
+function majProduction() {
+    const conteneur = document.getElementById('info-production');
+    const prods = data.productions.filter(p => p.semaine === data.semaineActive);
+
+    if (prods.length === 0) {
+        conteneur.innerHTML = '<div class="vide">Aucune production enregistrée cette semaine.</div>';
+        return;
+    }
+
+    let html = '';
+    prods.forEach(p => {
+        const poidsMoyen = (p.poidsTotal * 1000 / p.nbPieces).toFixed(0);
+        const prixMoyen = (p.prixTotal / p.nbPieces).toFixed(0);
+        html += `<table class="tableau" style="margin-bottom:16px;"><tbody>
+            <tr><td>Pièces préparées</td><td style="text-align:right;">${p.nbPieces}</td></tr>
+            <tr><td>Poids total</td><td style="text-align:right;">${p.poidsTotal} kg</td></tr>
+            <tr><td>Poids moyen / pièce</td><td style="text-align:right;">${poidsMoyen} g</td></tr>
+            <tr><td>Prix total</td><td style="text-align:right;">${p.prixTotal.toLocaleString()} FC</td></tr>
+            <tr><td>Coût moyen / pièce</td><td style="text-align:right;">${parseInt(prixMoyen).toLocaleString()} FC</td></tr>
+            <tr><td><button class="btn-action" onclick="supprimerProduction(${p.id})">Supprimer</button></td><td></td></tr>
+        </tbody></table>`;
+    });
+    conteneur.innerHTML = html;
+}
+
+function supprimerProduction(id) {
+    if (!confirm('Supprimer cette production ?')) return;
+    data.productions = data.productions.filter(p => p.id !== id);
+    sauvegarder();
+    majProduction();
+}
+
+// ============================================
+// VENTE
+// ============================================
+function afficherClient() {
+    const p = document.getElementById('vente-paiement').value;
+    document.getElementById('champ-client').style.display = p === 'credit' ? 'block' : 'none';
+}
+
+function calculerVente() {
+    const q = parseFloat(document.getElementById('vente-quantite').value) || 0;
+    const p = parseFloat(document.getElementById('vente-prix').value) || 0;
+    document.getElementById('vente-total').value = (q * p).toLocaleString() + ' FC';
+}
+
+function enregistrerVente() {
+    const type = document.getElementById('vente-type').value;
+    const quantite = parseFloat(document.getElementById('vente-quantite').value);
+    const prixUnitaire = parseFloat(document.getElementById('vente-prix').value);
+    const paiement = document.getElementById('vente-paiement').value;
+    const clientNom = document.getElementById('vente-client').value.trim();
+
+    const msg = document.getElementById('msg-vente');
+
+    if (isNaN(quantite) || quantite <= 0 || isNaN(prixUnitaire) || prixUnitaire <= 0) {
+        msg.className = 'message erreur visible';
+        msg.textContent = 'Quantité et prix doivent être valides.';
+        return;
+    }
+
+    if (paiement === 'credit' && !clientNom) {
+        msg.className = 'message erreur visible';
+        msg.textContent = 'Indiquez le nom du client pour une vente à crédit.';
+        return;
+    }
+
+    const total = quantite * prixUnitaire;
+    const maintenant = new Date();
+
+    data.ventes.push({
+        id: Date.now(),
+        date: maintenant.toISOString(),
+        heure: maintenant.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        semaine: data.semaineActive,
+        type: type,
+        quantite: quantite,
+        prixUnitaire: prixUnitaire,
+        total: total,
+        paiement: paiement,
+        clientNom: clientNom
+    });
+
+    if (paiement === 'credit') {
+        data.dettes.push({
+            id: Date.now() + 1,
+            clientNom: clientNom,
+            montant: total,
+            date: maintenant.toISOString(),
+            statut: 'en cours'
+        });
+        dire("Dette notée : " + clientNom + ", " + total.toLocaleString() + " FC.");
+    } else {
+        dire("Vente enregistrée. " + total.toLocaleString() + " FC.");
+    }
+
+    sauvegarder();
+
+    document.getElementById('vente-quantite').value = '';
+    document.getElementById('vente-prix').value = '';
+    document.getElementById('vente-total').value = '0 FC';
+    document.getElementById('vente-client').value = '';
+    document.getElementById('vente-paiement').value = 'comptant';
+    document.getElementById('champ-client').style.display = 'none';
+
+    msg.className = 'message succes visible';
+    msg.textContent = 'Vente enregistrée.';
+    setTimeout(() => msg.classList.remove('visible'), 2500);
+
+    majAccueil();
+}
+// ============================================
+// DETTES
+// ============================================
+function majDettes() {
+    const conteneur = document.getElementById('liste-dettes');
+    const enCours = data.dettes.filter(d => d.statut === 'en cours');
+
+    if (enCours.length === 0) {
+        conteneur.innerHTML = '<div class="vide">Aucune dette en cours.</div>';
+        return;
+    }
+
+    let total = 0;
+    let html = '<table class="tableau"><thead><tr><th>Client</th><th>Montant</th><th></th></tr></thead><tbody>';
+    enCours.forEach(d => {
+        total += d.montant;
+        html += `<tr>
+            <td>${d.clientNom}</td>
+            <td>${d.montant.toLocaleString()} FC</td>
+            <td style="text-align:right;"><button class="btn-action" onclick="marquerPaye(${d.id})">Payé</button></td>
+        </tr>`;
+    });
+    html += `<tr class="total-ligne"><td>Total</td><td colspan="2">${total.toLocaleString()} FC</td></tr>`;
+    html += '</tbody></table>';
+    conteneur.innerHTML = html;
+}
+
+function marquerPaye(id) {
+    if (!confirm('Marquer cette dette comme payée ?')) return;
+    const d = data.dettes.find(x => x.id === id);
+    if (d) {
+        d.statut = 'payé';
+        d.datePaiement = new Date().toISOString();
+        sauvegarder();
+        majDettes();
+        majAccueil();
+        dire("Dette de " + d.clientNom + " marquée comme payée.");
+    }
+}
+
+// ============================================
+// ACCUEIL
+// ============================================
+function majAccueil() {
+    const aujourdHui = new Date().toDateString();
+    const ventesJour = data.ventes.filter(v => new Date(v.date).toDateString() === aujourdHui);
+
+    const encaisse = ventesJour.filter(v => v.paiement === 'comptant').reduce((s, v) => s + v.total, 0);
+    const credit = ventesJour.filter(v => v.paiement === 'credit').reduce((s, v) => s + v.total, 0);
+    const dettesEnCours = data.dettes.filter(d => d.statut === 'en cours').length;
+
+    document.getElementById('stat-ventes-jour').textContent = ventesJour.length;
+    document.getElementById('stat-encaisse-jour').textContent = encaisse.toLocaleString() + ' FC';
+    document.getElementById('stat-credit-jour').textContent = credit.toLocaleString() + ' FC';
+    document.getElementById('stat-dettes').textContent = dettesEnCours;
+    document.getElementById('badge-semaine-accueil').textContent = 'Semaine ' + data.semaineActive + ' · en cours';
+
+    const ings = data.ingredients.filter(i => i.semaine === data.semaineActive);
+    const prods = data.productions.filter(p => p.semaine === data.semaineActive);
+
+    let texte = 'Ajoutez vos ingrédients de la semaine.';
+    let bouton = 'Ajouter des ingrédients';
+    let action = 'ingredients';
+
+    if (ings.length > 0 && prods.length === 0) {
+        texte = 'Enregistrez votre production.';
+        bouton = 'Aller à la production';
+        action = 'production';
+    } else if (prods.length > 0) {
+        texte = 'Enregistrez vos ventes.';
+        bouton = 'Enregistrer une vente';
+        action = 'vendre';
+    }
+
+    document.getElementById('prochaine-etape').textContent = texte;
+    const btn = document.getElementById('btn-prochaine');
+    btn.textContent = bouton;
+    btn.onclick = () => allerA(action);
+}
+
+// ============================================
+// NOUVELLE SEMAINE
+// ============================================
+function nouvelleSemaine() {
+    const sem = data.semaineActive;
+    if (!confirm("Terminer la semaine " + sem + " ?\n\nVous passerez à la semaine " + (sem + 1) + ".\nLes données de la semaine " + sem + " resteront consultables dans le bilan.")) {
+        return;
+    }
+
+    data.semaineActive = sem + 1;
+    sauvegarder();
+    initialiser();
+    dire("Semaine " + data.semaineActive + " commence. Bon courage.");
+}
+
+// ============================================
+// BILAN
+// ============================================
+function majBilan() {
+    const select = document.getElementById('select-bilan-semaine');
+    const semaines = new Set([data.semaineActive]);
+    data.ingredients.forEach(i => semaines.add(i.semaine));
+    data.productions.forEach(p => semaines.add(p.semaine));
+    data.ventes.forEach(v => semaines.add(v.semaine));
+
+    const listeSemaines = Array.from(semaines).sort((a, b) => a - b);
+    const valeurActuelle = parseInt(select.value) || data.semaineActive;
+
+    select.innerHTML = '';
+    listeSemaines.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = 'Semaine ' + s + (s === data.semaineActive ? ' (en cours)' : '');
+        if (s === valeurActuelle) opt.selected = true;
+        select.appendChild(opt);
+    });
+
+    const semaine = parseInt(select.value) || data.semaineActive;
+    const conteneur = document.getElementById('bilan-contenu');
+
+    const ings = data.ingredients.filter(i => i.semaine === semaine);
+    const prods = data.productions.filter(p => p.semaine === semaine);
+    const ventes = data.ventes.filter(v => v.semaine === semaine);
+
+    if (ventes.length === 0 && ings.length === 0 && prods.length === 0) {
+        conteneur.innerHTML = '<div class="vide">Aucune donnée pour cette semaine.</div>';
+        return;
+    }
+
+    const totalVentes = ventes.reduce((s, v) => s + v.total, 0);
+    const totalIngredients = ings.reduce((s, i) => s + i.prix, 0);
+    const benefice = totalVentes - totalIngredients;
+
+    const parJour = {};
+    ventes.forEach(v => {
+        const jour = new Date(v.date).toDateString();
+        if (!parJour[jour]) parJour[jour] = { total: 0, count: 0, date: new Date(v.date) };
+        parJour[jour].total += v.total;
+        parJour[jour].count++;
+    });
+    const jours = Object.values(parJour).sort((a, b) => a.date - b.date);
+
+    let html = '';
+
+    html += `<div class="stat-grid" style="margin-bottom:20px;">
+        <div class="stat"><div class="stat-label">Total ventes</div><div class="stat-valeur rouge">${totalVentes.toLocaleString()} FC</div></div>
+        <div class="stat"><div class="stat-label">Ingrédients</div><div class="stat-valeur">${totalIngredients.toLocaleString()} FC</div></div>
+        <div class="stat"><div class="stat-label">${benefice >= 0 ? 'Bénéfice' : 'Perte'}</div><div class="stat-valeur ${benefice >= 0 ? 'rouge' : ''}">${benefice.toLocaleString()} FC</div></div>
+        <div class="stat"><div class="stat-label">Ventes</div><div class="stat-valeur">${ventes.length}</div></div>
+    </div>`;
+
+    if (ings.length > 0) {
+        html += '<div class="carte-titre" style="margin-top:20px;">Ingrédients achetés</div>';
+        html += '<table class="tableau" style="margin-bottom:20px;"><tbody>';
+        ings.forEach(i => {
+            html += `<tr><td>${i.nom}</td><td style="text-align:right;">${i.prix.toLocaleString()} FC</td></tr>`;
+        });
+        html += `<tr class="total-ligne"><td>Total</td><td style="text-align:right;">${totalIngredients.toLocaleString()} FC</td></tr>`;
+        html += '</tbody></table>';
+    }
+
+    if (prods.length > 0) {
+        html += '<div class="carte-titre" style="margin-top:20px;">Production</div>';
+        html += '<table class="tableau" style="margin-bottom:20px;"><tbody>';
+        prods.forEach(p => {
+            html += `<tr><td>${p.nbPieces} pièces · ${p.poidsTotal} kg</td><td style="text-align:right;">${p.prixTotal.toLocaleString()} FC</td></tr>`;
+        });
+        html += '</tbody></table>';
+    }
+
+    if (ventes.length > 0) {
+        html += '<div class="carte-titre" style="margin-top:20px;">Ventes détaillées</div>';
+        html += '<table class="tableau" style="margin-bottom:20px;"><thead><tr><th>Jour</th><th>Qté</th><th>Total</th></tr></thead><tbody>';
+        ventes.slice().reverse().forEach(v => {
+            const d = new Date(v.date);
+            const jour = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+            const qte = v.quantite + (v.type === 'kg' ? ' kg' : ' pc');
+            const paiement = v.paiement === 'credit' ? ' (crédit)' : '';
+            html += `<tr><td>${jour} ${v.heure}${paiement}</td><td>${qte}</td><td>${v.total.toLocaleString()} FC</td></tr>`;
+        });
+        html += '</tbody></table>';
+    }
+
+    if (jours.length > 1) {
+        const meilleur = jours.reduce((m, j) => j.total > m.total ? j : m, jours[0]);
+        const pire = jours.reduce((m, j) => j.total < m.total ? j : m, jours[0]);
+        html += '<div class="carte-titre" style="margin-top:20px;">Analyse</div>';
+        html += '<table class="tableau"><tbody>';
+        html += `<tr><td>Meilleur jour</td><td style="text-align:right;">${meilleur.date.toLocaleDateString('fr-FR', { weekday: 'long' })} · ${meilleur.total.toLocaleString()} FC</td></tr>`;
+        html += `<tr><td>Jour le plus faible</td><td style="text-align:right;">${pire.date.toLocaleDateString('fr-FR', { weekday: 'long' })} · ${pire.total.toLocaleString()} FC</td></tr>`;
+        html += '</tbody></table>';
+    }
+
+    conteneur.innerHTML = html;
+}
+// ============================================
+// BILAN PARLÉ PAR D.
+// ============================================
+function bilanParle(type) {
+    let texte = '';
+
+    if (type === 'jour') {
+        const aujourdHui = new Date().toDateString();
+        const ventes = data.ventes.filter(v => new Date(v.date).toDateString() === aujourdHui);
+
+        if (ventes.length === 0) {
+            dire("Aucune vente aujourd'hui.");
+            return;
+        }
+
+        const encaisse = ventes.filter(v => v.paiement === 'comptant').reduce((s, v) => s + v.total, 0);
+        const credit = ventes.filter(v => v.paiement === 'credit').reduce((s, v) => s + v.total, 0);
+        const nbCredit = ventes.filter(v => v.paiement === 'credit').length;
+        const nbComptant = ventes.filter(v => v.paiement === 'comptant').length;
+
+        const dettesJour = data.dettes.filter(d => new Date(d.date).toDateString() === aujourdHui && d.statut === 'en cours');
+
+        texte = "Votre journée est terminée. Vous avez fait " + ventes.length + " vente" + (ventes.length > 1 ? "s" : "") + " aujourd'hui.\n\n";
+
+        if (nbComptant > 0) {
+            texte += nbComptant + " payée" + (nbComptant > 1 ? "s" : "") + " comptant — " + encaisse.toLocaleString() + " FC dans votre caisse.\n\n";
+        }
+
+        if (nbCredit > 0) {
+            texte += nbCredit + " à crédit — " + credit.toLocaleString() + " FC.\n";
+            dettesJour.forEach(d => {
+                texte += d.clientNom + " vous doit " + d.montant.toLocaleString() + " FC.\n";
+            });
+        }
+
+    } else if (type === 'semaine') {
+        const sem = data.semaineActive;
+        const ventes = data.ventes.filter(v => v.semaine === sem);
+        const ings = data.ingredients.filter(i => i.semaine === sem);
+        const prods = data.productions.filter(p => p.semaine === sem);
+
+        if (ventes.length === 0) {
+            dire("Pas encore de ventes cette semaine.");
+            return;
+        }
+
+        const totalVentes = ventes.reduce((s, v) => s + v.total, 0);
+        const totalIng = ings.reduce((s, i) => s + i.prix, 0);
+        const benefice = totalVentes - totalIng;
+
+        const totalPieces = prods.reduce((s, p) => s + p.nbPieces, 0);
+        const totalPoids = prods.reduce((s, p) => s + p.poidsTotal, 0);
+
+        const piecesVendues = ventes.filter(v => v.type === 'piece').reduce((s, v) => s + v.quantite, 0);
+        const kgVendus = ventes.filter(v => v.type === 'kg').reduce((s, v) => s + v.quantite, 0);
+        const piecesRestantes = Math.max(0, totalPieces - piecesVendues - Math.round(kgVendus * 1000 / (totalPoids * 1000 / totalPieces || 1)));
+
+        texte = "Votre semaine est terminée.\n\n";
+
+        if (ings.length > 0) {
+            texte += "Vous avez acheté vos ingrédients : " + totalIng.toLocaleString() + " FC en tout.\n\n";
+        }
+
+        if (prods.length > 0) {
+            texte += "Avec ça, vous avez préparé " + totalPieces + " pièces, environ " + totalPoids + " kilos.\n\n";
+        }
+
+        texte += "Sur la semaine, vous avez vendu";
+        if (piecesVendues > 0) texte += " " + piecesVendues + " pièce" + (piecesVendues > 1 ? "s" : "");
+        if (piecesVendues > 0 && kgVendus > 0) texte += " et";
+        if (kgVendus > 0) texte += " " + kgVendus + " kilo" + (kgVendus > 1 ? "s" : "");
+        texte += ". Ça vous a rapporté " + totalVentes.toLocaleString() + " FC.\n\n";
+
+        if (piecesRestantes > 0) {
+            texte += "Il vous reste environ " + piecesRestantes + " pièces en réserve.\n\n";
+        }
+
+        if (benefice >= 0) {
+            texte += "Votre bénéfice cette semaine : " + benefice.toLocaleString() + " FC.\n\n";
+            if (benefice > totalVentes * 0.5) {
+                texte += "C'est une très bonne semaine.";
+            } else if (benefice > 0) {
+                texte += "C'est correct. On continue comme ça.";
+            }
+        } else {
+            texte += "Cette semaine, vous avez acheté pour " + totalIng.toLocaleString() + " FC d'ingrédients, mais vous n'avez vendu que pour " + totalVentes.toLocaleString() + " FC.\n\n";
+            texte += "Il y a une petite perte de " + Math.abs(benefice).toLocaleString() + " FC.";
+        }
+
+    } else if (type === 'mois') {
+        const maintenant = new Date();
+        const moisActuel = maintenant.getMonth();
+        const anneeActuelle = maintenant.getFullYear();
+
+        const ventes = data.ventes.filter(v => {
+            const d = new Date(v.date);
+            return d.getMonth() === moisActuel && d.getFullYear() === anneeActuelle;
+        });
+
+        if (ventes.length === 0) {
+            dire("Aucune vente ce mois-ci.");
+            return;
+        }
+
+        const totalVentes = ventes.reduce((s, v) => s + v.total, 0);
+        const creditTotal = ventes.filter(v => v.paiement === 'credit').reduce((s, v) => s + v.total, 0);
+        const totalIng = data.ingredients.filter(i => {
+            const d = new Date(i.date);
+            return d.getMonth() === moisActuel && d.getFullYear() === anneeActuelle;
+        }).reduce((s, i) => s + i.prix, 0);
+
+        const benefice = totalVentes - totalIng;
+
+        const semainesUniques = Array.from(new Set(ventes.map(v => v.semaine))).sort();
+        const nbSemaines = semainesUniques.length;
+
+        let meilleureSemaine = null;
+        let meilleurTotal = 0;
+        semainesUniques.forEach(s => {
+            const total = ventes.filter(v => v.semaine === s).reduce((sum, v) => sum + v.total, 0);
+            if (total > meilleurTotal) {
+                meilleurTotal = total;
+                meilleureSemaine = s;
+            }
+        });
+
+        texte = "On arrive à la fin du mois. Voici le résumé.\n\n";
+        texte += "Vous avez travaillé " + nbSemaines + " semaine" + (nbSemaines > 1 ? "s" : "") + ". " + ventes.length + " ventes en tout.\n\n";
+        texte += "Vous avez encaissé " + totalVentes.toLocaleString() + " FC.";
+        if (creditTotal > 0) {
+            texte += " Il reste " + creditTotal.toLocaleString() + " FC en crédit chez certaines clientes.";
+        }
+        texte += "\n\n";
+        texte += "Votre bénéfice du mois : " + benefice.toLocaleString() + " FC.\n\n";
+        if (meilleureSemaine) {
+            texte += "Votre meilleure semaine a été la " + meilleureSemaine + "ᵉ.";
+        }
+    }
+
+    overlayD.classList.add('visible');
+    texteDGuide.classList.remove('visible');
+    btnCompris.classList.remove('visible');
+    texteDGuide.innerHTML = '';
+
+    setTimeout(() => {
+        ecrireDansElement(texteDGuide, texte, () => {
+            btnCompris.textContent = 'Fermer';
+            btnCompris.classList.add('visible');
+        });
+    }, 300);
+}
+
+// ============================================
+// SAUVEGARDE / RESTAURATION
+// ============================================
+function sauvegarderDonnees() {
+    const msg = document.getElementById('msg-data');
+    try {
+        const exportData = {
+            version: '1.0',
+            dateSauvegarde: new Date().toISOString(),
+            nom: data.nom,
+            semaineActive: data.semaineActive,
+            ingredients: data.ingredients,
+            productions: data.productions,
+            ventes: data.ventes,
+            dettes: data.dettes,
+            pagesExpliquees: data.pagesExpliquees
+        };
+
+        const json = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const date = new Date().toISOString().split('T')[0];
+        const nomFichier = 'dodo-sauvegarde-' + date + '.json';
+
+        // Sur iOS, on essaie d'abord navigator.share
+        if (navigator.share && navigator.canShare) {
+            try {
+                const file = new File([blob], nomFichier, { type: 'application/json' });
+                if (navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        files: [file],
+                        title: 'Sauvegarde Dodo Business',
+                        text: 'Sauvegarde du ' + date
+                    }).then(() => {
+                        msg.className = 'message succes visible';
+                        msg.textContent = 'Sauvegarde partagée.';
+                        setTimeout(() => msg.classList.remove('visible'), 3000);
+                    }).catch((err) => {
+                        if (err.name !== 'AbortError') {
+                            telechargerFichier(blob, nomFichier);
+                        }
+                    });
+                    return;
+                }
+            } catch (err) {
+                // Fallback
+            }
+        }
+
+        telechargerFichier(blob, nomFichier);
+    } catch (e) {
+        msg.className = 'message erreur visible';
+        msg.textContent = 'Erreur lors de la sauvegarde.';
+        console.error(e);
+    }
+}
+
+function telechargerFichier(blob, nomFichier) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nomFichier;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    const msg = document.getElementById('msg-data');
+    msg.className = 'message succes visible';
+    msg.textContent = 'Sauvegarde téléchargée : ' + nomFichier;
+    setTimeout(() => msg.classList.remove('visible'), 5000);
+    dire("Sauvegarde effectuée.");
+}
+
+function restaurerDonnees() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const msg = document.getElementById('msg-data');
+            try {
+                const importData = JSON.parse(event.target.result);
+                if (!importData.version || !importData.ventes) {
+                    msg.className = 'message erreur visible';
+                    msg.textContent = 'Fichier invalide.';
+                    return;
+                }
+                if (!confirm('Restaurer cette sauvegarde ? Vos données actuelles seront remplacées.')) return;
+
+                data.nom = importData.nom || data.nom;
+                data.semaineActive = importData.semaineActive || 1;
+                data.ingredients = importData.ingredients || [];
+                data.productions = importData.productions || [];
+                data.ventes = importData.ventes || [];
+                data.dettes = importData.dettes || [];
+                data.pagesExpliquees = importData.pagesExpliquees || [];
+
+                sauvegarder();
+                initialiser();
+                majIngredients();
+                majProduction();
+                majDettes();
+                majBilan();
+
+                msg.className = 'message succes visible';
+                msg.textContent = 'Données restaurées avec succès.';
+                setTimeout(() => msg.classList.remove('visible'), 3000);
+                dire("Données restaurées.");
+            } catch (err) {
+                msg.className = 'message erreur visible';
+                msg.textContent = 'Impossible de lire le fichier.';
+                console.error(err);
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+function reinitialiserDonnees() {
+    if (!confirm('⚠️ ATTENTION ⚠️\n\nCela va effacer TOUTES les données.\n\nCette action est IRRÉVERSIBLE.\n\nContinuer ?')) return;
+    if (!confirm('Dernière confirmation : effacer TOUT et recommencer depuis le début ?')) return;
+
+    localStorage.removeItem(CLE_DATA);
+    location.reload();
+}
+
+// ============================================
+// DÉMARRAGE
+// ============================================
+window.addEventListener('DOMContentLoaded', () => {
+    if (data.nom && data.nom.length > 0) {
+        ecranRencontre.style.display = 'none';
+        app.classList.add('visible');
+        afficheNom.textContent = data.nom;
+        dire("Bonjour " + data.nom + ".");
+        initialiser();
+        afficherBanniereIOS();
+    } else {
+        demarrerRencontre();
+    }
+});
+</script>
+
+</body>
+</html>
